@@ -141,6 +141,62 @@ USB cameras must be disconnected and then reconnected after setting a new device
 - **pylon_ros2_camera_wrapper**: wrapper creating the main component `pylon_ros2_camera::PylonROS2CameraNode` implemented in the *pylon_ros2_camera_component* package. The wrapper starts the driver in a single process.
 - **pylon_ros2_camera_interfaces**: package implementing *pylon_ros2_camera_node* interfaces (messages, services and actions).
 
+## Using the driver in ROS1
+
+The pylon driver is a ROS2 package. To view its output from a ROS1 (Noetic)
+system you can use `ros1_bridge`, which forwards topics and services between
+ROS2 and ROS1. The steps below outline a minimal setup for a student running
+Ubuntu 20.04 with ROS1 and a ROS2 installation containing this driver (for
+example on a second machine or inside a container running Ubuntu 24.04).
+
+1. **Install ROS1 Noetic** on the 20.04 system and set up the environment:
+   ```bash
+   sudo apt update
+   sudo apt install ros-noetic-desktop-full
+   echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+   source ~/.bashrc
+   ```
+
+2. **Build the ROS2 driver** on a machine with ROS2 Jazzy. Clone this repository
+   in a ROS2 workspace and build it as explained in the installation section
+   above. Source the workspace after building:
+   ```bash
+   cd ~/dev_ws && . install/setup.bash
+   ```
+
+3. **Compile the `ros1_bridge`** in a workspace that has access to both ROS1 and
+   ROS2 installations. On the ROS2 machine one possible workflow is:
+   ```bash
+   mkdir -p ~/bridge_ws/src
+   cd ~/bridge_ws/src
+   git clone https://github.com/ros2/ros1_bridge.git
+   cd ..
+   source /opt/ros/noetic/setup.bash
+   source /opt/ros/jazzy/setup.bash
+   colcon build --packages-select ros1_bridge
+   ```
+
+4. **Launch the pylon driver** in the ROS2 environment:
+   ```bash
+   ros2 launch pylon_ros2_camera_wrapper pylon_ros2_camera.launch.py
+   ```
+
+5. **Start the dynamic bridge** from the same ROS2 machine. Open a new terminal
+   and source both ROS1 and ROS2 setups before running:
+   ```bash
+   ros2 run ros1_bridge dynamic_bridge --bridge-all-topics
+   ```
+
+6. **View the images in ROS1**. On the ROS1 side start `roscore` and run a
+   viewer such as `rqt_image_view` or `rviz` subscribing to
+   `/my_camera/pylon_ros2_camera_node/image_raw`:
+   ```bash
+   rqt_image_view /my_camera/pylon_ros2_camera_node/image_raw
+   ```
+   In RViz add an *Image* display and set the topic to the same name. Once the
+   bridge is running the images will appear in the ROS1 tools.
+
+
 
 ## Parameters
 
